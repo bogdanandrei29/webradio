@@ -1,24 +1,37 @@
-{
-  "name": "Web Radio Player",
-  "short_name": "Radio",
-  "description": "Stream your favorite radio stations",
-  "start_url": "./radio1.html",
-  "display": "standalone",
-  "background_color": "#111111",
-  "theme_color": "#1c1c1c",
-  "orientation": "portrait",
-  "icons": [
-    {
-      "src": "https://via.placeholder.com/192x192/1db954/000000?text=Radio",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "https://via.placeholder.com/512x512/1db954/000000?text=Radio",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ]
-}
+// Service Worker for offline functionality
+const CACHE_NAME = 'radio-v1';
+const urlsToCache = [
+  './radio1.html',
+  './manifest.json'
+];
+
+// Install event - cache resources
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+  );
+});
+
+// Fetch event - serve from cache when offline
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
+  );
+});
+
+// Activate event - clean up old caches
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
